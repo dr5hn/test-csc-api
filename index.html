@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSC API - CORS Test</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+            color: #333;
+        }
+        h1 {
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 24px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #444;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        select:disabled {
+            background: #f9f9f9;
+            color: #999;
+        }
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 600px) {
+            .row {
+                grid-template-columns: 1fr;
+            }
+        }
+        .log-panel {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #333;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .log-time {
+            color: #888;
+        }
+        .log-url {
+            color: #9cdcfe;
+            word-break: break-all;
+        }
+        .log-success {
+            color: #4ec9b0;
+        }
+        .log-error {
+            color: #f48771;
+        }
+        .log-warning {
+            color: #dcdcaa;
+        }
+        .log-header {
+            color: #ce9178;
+        }
+        .log-cache-hit {
+            color: #b5cea8;
+        }
+        .log-cache-miss {
+            color: #dcdcaa;
+        }
+        .clear-btn {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+        .clear-btn:hover {
+            background: #444;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .selection-display {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-top: 8px;
+        }
+        .selection-display strong {
+            color: #0369a1;
+        }
+        .api-url {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin-bottom: 16px;
+            font-family: monospace;
+            font-size: 13px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <h1>CSC API - CORS Test</h1>
+    <p class="subtitle">Test Country-State-City API from any origin to verify CORS configuration</p>
+
+    <div class="card">
+        <div class="api-url">
+            API: <strong>https://api.countrystatecity.in/api/v1</strong>
+        </div>
+
+        <label for="apiKey">API Key</label>
+        <input type="text" id="apiKey" placeholder="Enter your X-CSCAPI-KEY" autocomplete="off">
+
+        <div class="row">
+            <div>
+                <label for="country">Country</label>
+                <select id="country" disabled>
+                    <option value="">Enter API key first</option>
+                </select>
+            </div>
+            <div>
+                <label for="state">State</label>
+                <select id="state" disabled>
+                    <option value="">Select country first</option>
+                </select>
+            </div>
+            <div>
+                <label for="city">City</label>
+                <select id="city" disabled>
+                    <option value="">Select state first</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="selectionDisplay" class="selection-display" style="display: none;">
+            <strong>Selected:</strong> <span id="selectionText"></span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="margin: 0;">Request Log</h3>
+            <button class="clear-btn" onclick="clearLog()">Clear Log</button>
+        </div>
+        <div id="logPanel" class="log-panel">
+            <div class="log-entry">
+                <span class="log-time">[Ready]</span> Enter your API key to begin testing...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://api.countrystatecity.in/api/v1';
+
+        const apiKeyInput = document.getElementById('apiKey');
+        const countrySelect = document.getElementById('country');
+        const stateSelect = document.getElementById('state');
+        const citySelect = document.getElementById('city');
+        const logPanel = document.getElementById('logPanel');
+        const selectionDisplay = document.getElementById('selectionDisplay');
+        const selectionText = document.getElementById('selectionText');
+
+        let countries = [];
+        let states = [];
+        let cities = [];
+
+        function getTimestamp() {
+            return new Date().toLocaleTimeString('en-US', { hour12: false });
+        }
+
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${getTimestamp()}]</span> ${message}`;
+            logPanel.insertBefore(entry, logPanel.firstChild);
+        }
+
+        function clearLog() {
+            logPanel.innerHTML = '<div class="log-entry"><span class="log-time">[Cleared]</span> Log cleared</div>';
+        }
+
+        async function fetchWithLog(url, description) {
+            const apiKey = apiKeyInput.value.trim();
+            if (!apiKey) {
+                log(`<span class="log-error">Error: No API key provided</span>`);
+                return null;
+            }
+
+            log(`<span class="log-url">GET ${url}</span>`);
+
+            try {
+                const startTime = performance.now();
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-CSCAPI-KEY': apiKey
+                    }
+                });
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+
+                // Log response status
+                const statusClass = response.ok ? 'log-success' : 'log-error';
+                log(`<span class="${statusClass}">Status: ${response.status} ${response.statusText}</span> (${duration}ms)`);
+
+                // Log relevant headers
+                const cacheHeader = response.headers.get('X-Cache');
+                const corsHeader = response.headers.get('Access-Control-Allow-Origin');
+
+                if (cacheHeader) {
+                    const cacheClass = cacheHeader === 'HIT' ? 'log-cache-hit' : 'log-cache-miss';
+                    log(`<span class="log-header">X-Cache:</span> <span class="${cacheClass}">${cacheHeader}</span>`);
+                }
+
+                if (corsHeader) {
+                    log(`<span class="log-header">Access-Control-Allow-Origin:</span> <span class="log-success">${corsHeader}</span>`);
+                } else {
+                    log(`<span class="log-warning">No CORS header in response (may be OK if same-origin)</span>`);
+                }
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`<span class="log-error">Error body: ${errorText}</span>`);
+                    return null;
+                }
+
+                const data = await response.json();
+                log(`<span class="log-success">${description}: Received ${Array.isArray(data) ? data.length : 1} item(s)</span>`);
+                return data;
+
+            } catch (error) {
+                // CORS errors typically manifest as TypeError: Failed to fetch
+                if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+                    log(`<span class="log-error">CORS ERROR: Request blocked by browser</span>`);
+                    log(`<span class="log-error">This usually means:</span>`);
+                    log(`<span class="log-error">  - Server didn't send Access-Control-Allow-Origin header</span>`);
+                    log(`<span class="log-error">  - Origin not in allowed list</span>`);
+                    log(`<span class="log-error">  - Network error / server unreachable</span>`);
+                } else {
+                    log(`<span class="log-error">Error: ${error.name} - ${error.message}</span>`);
+                }
+                return null;
+            }
+        }
+
+        async function loadCountries() {
+            countrySelect.disabled = true;
+            countrySelect.innerHTML = '<option value="">Loading countries...</option>';
+
+            const data = await fetchWithLog(`${API_BASE}/countries`, 'Countries');
+
+            if (data && Array.isArray(data)) {
+                countries = data;
+                countrySelect.innerHTML = '<option value="">Select a country</option>';
+                data.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country.iso2;
+                    option.textContent = `${country.emoji || ''} ${country.name}`;
+                    option.dataset.name = country.name;
+                    countrySelect.appendChild(option);
+                });
+                countrySelect.disabled = false;
+            } else {
+                countrySelect.innerHTML = '<option value="">Failed to load countries</option>';
+            }
+        }
+
+        async function loadStates(countryIso2) {
+            stateSelect.disabled = true;
+            stateSelect.innerHTML = '<option value="">Loading states...</option>';
+            citySelect.disabled = true;
+            citySelect.innerHTML = '<option value="">Select state first</option>';
+
+            const data = await fetchWithLog(
+                `${API_BASE}/countries/${countryIso2}/states`,
+                'States'
+            );
+
+            if (data && Array.isArray(data)) {
+                states = data;
+                if (data.length === 0) {
+                    stateSelect.innerHTML = '<option value="">No states available</option>';
+                } else {
+                    stateSelect.innerHTML = '<option value="">Select a state</option>';
+                    data.forEach(state => {
+                        const option = document.createElement('option');
+                        option.value = state.iso2;
+                        option.textContent = state.name;
+                        option.dataset.name = state.name;
+                        stateSelect.appendChild(option);
+                    });
+                    stateSelect.disabled = false;
+                }
+            } else {
+                stateSelect.innerHTML = '<option value="">Failed to load states</option>';
+            }
+
+            updateSelectionDisplay();
+        }
+
+        async function loadCities(countryIso2, stateIso2) {
+            citySelect.disabled = true;
+            citySelect.innerHTML = '<option value="">Loading cities...</option>';
+
+            const data = await fetchWithLog(
+                `${API_BASE}/countries/${countryIso2}/states/${stateIso2}/cities`,
+                'Cities'
+            );
+
+            if (data && Array.isArray(data)) {
+                cities = data;
+                if (data.length === 0) {
+                    citySelect.innerHTML = '<option value="">No cities available</option>';
+                } else {
+                    citySelect.innerHTML = '<option value="">Select a city</option>';
+                    data.forEach(city => {
+                        const option = document.createElement('option');
+                        option.value = city.id;
+                        option.textContent = city.name;
+                        option.dataset.name = city.name;
+                        citySelect.appendChild(option);
+                    });
+                    citySelect.disabled = false;
+                }
+            } else {
+                citySelect.innerHTML = '<option value="">Failed to load cities</option>';
+            }
+
+            updateSelectionDisplay();
+        }
+
+        function updateSelectionDisplay() {
+            const countryOption = countrySelect.selectedOptions[0];
+            const stateOption = stateSelect.selectedOptions[0];
+            const cityOption = citySelect.selectedOptions[0];
+
+            const parts = [];
+            if (countryOption && countryOption.dataset.name) {
+                parts.push(countryOption.dataset.name);
+            }
+            if (stateOption && stateOption.dataset.name) {
+                parts.push(stateOption.dataset.name);
+            }
+            if (cityOption && cityOption.dataset.name) {
+                parts.push(cityOption.dataset.name);
+            }
+
+            if (parts.length > 0) {
+                selectionText.textContent = parts.join(' > ');
+                selectionDisplay.style.display = 'block';
+            } else {
+                selectionDisplay.style.display = 'none';
+            }
+        }
+
+        // Event Listeners
+        let apiKeyTimeout;
+        apiKeyInput.addEventListener('input', () => {
+            clearTimeout(apiKeyTimeout);
+            apiKeyTimeout = setTimeout(() => {
+                if (apiKeyInput.value.trim()) {
+                    log(`<span class="log-success">API key entered, loading countries...</span>`);
+                    loadCountries();
+                } else {
+                    countrySelect.disabled = true;
+                    countrySelect.innerHTML = '<option value="">Enter API key first</option>';
+                    stateSelect.disabled = true;
+                    stateSelect.innerHTML = '<option value="">Select country first</option>';
+                    citySelect.disabled = true;
+                    citySelect.innerHTML = '<option value="">Select state first</option>';
+                }
+            }, 500);
+        });
+
+        countrySelect.addEventListener('change', () => {
+            const countryIso2 = countrySelect.value;
+            if (countryIso2) {
+                loadStates(countryIso2);
+            } else {
+                stateSelect.disabled = true;
+                stateSelect.innerHTML = '<option value="">Select country first</option>';
+                citySelect.disabled = true;
+                citySelect.innerHTML = '<option value="">Select state first</option>';
+            }
+            updateSelectionDisplay();
+        });
+
+        stateSelect.addEventListener('change', () => {
+            const countryIso2 = countrySelect.value;
+            const stateIso2 = stateSelect.value;
+            if (stateIso2) {
+                loadCities(countryIso2, stateIso2);
+            } else {
+                citySelect.disabled = true;
+                citySelect.innerHTML = '<option value="">Select state first</option>';
+            }
+            updateSelectionDisplay();
+        });
+
+        citySelect.addEventListener('change', updateSelectionDisplay);
+    </script>
+</body>
+</html>
