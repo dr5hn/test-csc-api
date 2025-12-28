@@ -21,11 +21,3 @@ Test the [Country-State-City API](https://test.countrystatecity.in/) from any or
 3. Enter your `X-CSCAPI-KEY`
 4. Select a country, state, and city
 5. Monitor the request log for CORS headers and responses
-
-## Live Demo
-
-Visit [test-csc-api.darshan.dev](https://test.countrystatecity.in) (or your configured domain)
-
-## API Reference
-
-- [API Documentation](https://docs.countrystatecity.in/)
